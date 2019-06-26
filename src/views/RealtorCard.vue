@@ -46,7 +46,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch } from "vue-property-decorator";
+import { Component, Vue, Watch, Prop } from "vue-property-decorator";
 import { uuid } from "vue-uuid";
 
 import db from "@/db";
@@ -55,13 +55,12 @@ import moment from "moment";
 import UnitData from "@/models/UnitData";
 import RealtorData from "@/models/RealtorData";
 
-@Component({
-  props: {
-    id: String,
-    method: String
-  }
-})
+@Component({})
 export default class RealtorCard extends Vue {
+  @Prop({ default: "0" })
+  readonly id!: string;
+  @Prop(String)
+  readonly method!: string;
   public readonly RULES = {
     required: (value: string): any =>
       !!value || "Значение не может быть пустым.",
@@ -148,9 +147,11 @@ export default class RealtorCard extends Vue {
   public initComponentCreate(): void {
     this.getUnits().then(units => {
       this.units = units;
+      this.selectedUnit = this.units[0];
     });
     this.setNextID();
     this.realtor = this.generateGUID(this.realtor);
+    this.registerDate = moment().format("YYYY-MM-DD");
   }
 
   public getUnits(): Promise<UnitData[]> {
@@ -207,7 +208,7 @@ export default class RealtorCard extends Vue {
   }
 
   public handleClickSaveData(): void {
-    if (this.$refs.form.validate()) {
+    if ((this.$refs.form as Vue & { validate: () => boolean }).validate()) {
       this.isEdit && this.updateUserData(this.realtor);
       this.isCreate && this.createUser(this.realtor);
     }

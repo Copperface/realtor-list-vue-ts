@@ -100,79 +100,77 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Watch } from 'vue-property-decorator';
-import moment from 'moment';
-import db from '@/db';
+import { Vue, Component, Watch, Prop } from "vue-property-decorator";
+import moment from "moment";
+import db from "@/db";
 
-import RealtorData from '@/models/RealtorData';
-import UnitData from '@/models/UnitData';
-import FullRealtorData from '@/models/FullRealtorData';
+import RealtorData from "@/models/RealtorData";
+import UnitData from "@/models/UnitData";
+import FullRealtorData from "@/models/FullRealtorData";
+import FiltersQuery from "@/models/FiltersQuery";
 
-@Component({
-  props: {
-    query: Object,
-  },
-})
+@Component({})
 export default class RealtorsList extends Vue {
-
+  @Prop({ default: { search: "", surname: "", date_since: "", date_till: "" } })
+  readonly query!: FiltersQuery;
   get formatedSinceDate(): string {
-    return this.sinceDate ? moment(this.sinceDate).format('DD.MM.YYYY') : '';
+    return this.sinceDate ? moment(this.sinceDate).format("DD.MM.YYYY") : "";
   }
 
   get formatedTillDate(): string {
-    return this.tillDate ? moment(this.tillDate).format('DD.MM.YYYY') : '';
+    return this.tillDate ? moment(this.tillDate).format("DD.MM.YYYY") : "";
   }
   public readonly TABLE_HEADERS = [
-    { text: 'Фамилия', value: 'surname', align: 'center' },
-    { text: 'Имя', value: 'name', align: 'center' },
-    { text: 'Подразделение', value: 'uid', align: 'center' },
-    { text: 'Дата регистрации', value: 'register_date', align: 'center' },
+    { text: "Фамилия", value: "surname", align: "center" },
+    { text: "Имя", value: "name", align: "center" },
+    { text: "Подразделение", value: "uid", align: "center" },
+    { text: "Дата регистрации", value: "register_date", align: "center" }
   ];
 
   public realtorsData: FullRealtorData[] = [];
 
-  public surnameFilter: string = this.query.surname || '';
+  public surnameFilter: string = this.query.surname || "";
 
   // Date since filter
   public showSinceDate: boolean = false;
   public sinceDate: string =
     this.query.date_since &&
-    moment(this.query.date_since, 'DD.MM.YYYY').isValid()
-      ? moment(this.query.date_since, 'DD.MM.YYYY').format('YYYY-MM-DD')
-      : '';
+    moment(this.query.date_since, "DD.MM.YYYY").isValid()
+      ? moment(this.query.date_since, "DD.MM.YYYY").format("YYYY-MM-DD")
+      : "";
 
   // Date till filter
   public showTillDate: boolean = false;
   public tillDate: string =
-    this.query.date_till && moment(this.query.date_till, 'DD.MM.YYYY').isValid()
-      ? moment(this.query.date_till, 'DD.MM.YYYY').format('YYYY-MM-DD')
-      : '';
+    this.query.date_till && moment(this.query.date_till, "DD.MM.YYYY").isValid()
+      ? moment(this.query.date_till, "DD.MM.YYYY").format("YYYY-MM-DD")
+      : "";
 
   public handleClickClearSinceDate(): void {
-    this.sinceDate = '';
+    this.sinceDate = "";
   }
 
-  @Watch('formatedSinceDate')
+  @Watch("formatedSinceDate")
   public onFormatedSinceDateChange(): void {
     this.$router.push({
-      path: '/',
-      query: { ...this.query, date_since: this.formatedSinceDate },
+      path: "/",
+      query: { ...this.query, date_since: this.formatedSinceDate }
     });
   }
 
   public handleClickClearTillDate(): void {
-    this.tillDate = '';
+    this.tillDate = "";
   }
 
-  @Watch('formatedTillDate')
+  @Watch("formatedTillDate")
   public onFormatedTillDateChange(): void {
     this.$router.push({
-      path: '/',
-      query: { ...this.query, date_till: this.formatedTillDate },
+      path: "/",
+      query: { ...this.query, date_till: this.formatedTillDate }
     });
   }
 
-  @Watch('query')
+  @Watch("query")
   public onQueryChanged(): void {
     this.initComponent();
   }
@@ -182,7 +180,7 @@ export default class RealtorsList extends Vue {
   }
 
   public initComponent(): void {
-    this.getData().then((data) => {
+    this.getData().then(data => {
       this.realtorsData = this.filterData(data, this.query);
     });
   }
@@ -192,33 +190,33 @@ export default class RealtorsList extends Vue {
       Promise.all([this.getUnits(), this.getRealtors()]).then(
         ([units, realtors]) => {
           resolve(
-            realtors.map((realtor) => {
+            realtors.map(realtor => {
               return {
                 ...realtor,
-                unit: units.find((unit) => unit.id === realtor.uid) || {
+                unit: units.find(unit => unit.id === realtor.uid) || {
                   id: 0,
-                  name: '',
-                  register_date: '',
-                },
+                  name: "",
+                  register_date: ""
+                }
               };
-            }),
+            })
           );
-        },
+        }
       );
     });
   }
 
   public getUnits(): Promise<UnitData[]> {
-    return new Promise((resolve) => {
-      db.ref('Units').on('value', (snapshot) => {
+    return new Promise(resolve => {
+      db.ref("Units").on("value", snapshot => {
         resolve(snapshot.val());
       });
     });
   }
 
   public getRealtors(): Promise<RealtorData[]> {
-    return new Promise((resolve) => {
-      db.ref('Realtors').on('value', (snapshot) => {
+    return new Promise(resolve => {
+      db.ref("Realtors").on("value", snapshot => {
         resolve(snapshot.val());
       });
     });
@@ -230,11 +228,11 @@ export default class RealtorsList extends Vue {
     query.surname && (dataCopy = this.filterBySurname(dataCopy, query.surname));
 
     query.date_since &&
-      moment(query.date_since, 'DD.MM.YYYY').isValid() &&
+      moment(query.date_since, "DD.MM.YYYY").isValid() &&
       (dataCopy = this.filterByDateSince(dataCopy, query.date_since));
 
     query.date_till &&
-      moment(query.date_till, 'DD.MM.YYYY').isValid() &&
+      moment(query.date_till, "DD.MM.YYYY").isValid() &&
       (dataCopy = this.filterByDateTill(dataCopy, query.date_till));
 
     query.search && (dataCopy = this.filterBySearch(dataCopy, query.search));
@@ -249,7 +247,7 @@ export default class RealtorsList extends Vue {
 
   public filterBySearch(
     data: FullRealtorData[],
-    search: string,
+    search: string
   ): FullRealtorData[] {
     return data.filter((el: FullRealtorData) => {
       return (
@@ -262,7 +260,7 @@ export default class RealtorsList extends Vue {
 
   public filterBySurname(
     data: FullRealtorData[],
-    surname: string,
+    surname: string
   ): FullRealtorData[] {
     return data.filter((el: FullRealtorData) => {
       return el.surname.toLowerCase().includes(surname.toLowerCase());
@@ -271,23 +269,23 @@ export default class RealtorsList extends Vue {
 
   public filterByDateSince(
     data: FullRealtorData[],
-    dateSince: string,
+    dateSince: string
   ): FullRealtorData[] {
     return data.filter((el: FullRealtorData) => {
       return (
-        moment(el.register_date, 'DD.MM.YYYY') >=
-        moment(dateSince, 'DD.MM.YYYY')
+        moment(el.register_date, "DD.MM.YYYY") >=
+        moment(dateSince, "DD.MM.YYYY")
       );
     });
   }
 
   public filterByDateTill(
     data: FullRealtorData[],
-    dateTill: string,
+    dateTill: string
   ): FullRealtorData[] {
     return data.filter((el: FullRealtorData) => {
       return (
-        moment(el.register_date, 'DD.MM.YYYY') <= moment(dateTill, 'DD.MM.YYYY')
+        moment(el.register_date, "DD.MM.YYYY") <= moment(dateTill, "DD.MM.YYYY")
       );
     });
   }
@@ -295,8 +293,8 @@ export default class RealtorsList extends Vue {
   public handleAppendSurnameFilter(): void {
     this.surnameFilter &&
       this.$router.push({
-        path: '/',
-        query: { ...this.query, surname: this.surnameFilter },
+        path: "/",
+        query: { ...this.query, surname: this.surnameFilter }
       });
     this.query.surname &&
       !this.surnameFilter &&
@@ -305,14 +303,14 @@ export default class RealtorsList extends Vue {
 
   public handleClearSurnameFilter(): void {
     this.$router.push({
-      path: '/',
-      query: { ...this.query, surname: '' },
+      path: "/",
+      query: { ...this.query, surname: "" }
     });
   }
 
   public handleDBLClickTableRow(id: number): void {
     this.$router.push({
-      path: '/card/edit/' + id,
+      path: "/card/edit/" + id
     });
   }
 }
